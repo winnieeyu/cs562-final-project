@@ -11,7 +11,7 @@ def main():
     body = """
     for row in cur:
         if row['quant'] > 10:
-            print(row)
+            _global.append(row)
     """
 
     # Note: The f allows formatting with variables.
@@ -19,13 +19,20 @@ def main():
     tmp = f"""
 import psycopg2
 import psycopg2.extras
+import tabulate
 
 def main():
     conn = psycopg2.connect("dbname=cs562_project user=ari password=ari",
                             cursor_factory=psycopg2.extras.DictCursor)
     cur = conn.cursor()
     cur.execute("SELECT * FROM sales")
+    
+    _global = []
     {body}
+    
+    print(tabulate.tabulate(_global,
+                        headers="keys", tablefmt="psql"))
+
     
 if "__main__" == __name__:
     main()
