@@ -21,7 +21,7 @@ import psycopg2
 import psycopg2.extras
 import tabulate
 
-def main():
+def query():
     conn = psycopg2.connect("dbname=cs562_project user=ari password=ari",
                             cursor_factory=psycopg2.extras.DictCursor)
     cur = conn.cursor()
@@ -30,9 +30,11 @@ def main():
     _global = []
     {body}
     
-    print(tabulate.tabulate(_global,
-                        headers="keys", tablefmt="psql"))
+    return tabulate.tabulate(_global,
+                        headers="keys", tablefmt="psql")
 
+def main():
+    print(query())
     
 if "__main__" == __name__:
     main()
