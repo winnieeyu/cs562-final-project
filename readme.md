@@ -1,4 +1,4 @@
-# CS563 Project Demo
+# CS562 Project Demo
 
 This is basic demo code we wrote during lecture #2 on 3/30/23. Logic is hardcoded for a basic SQL query containing a where clause. The query is executed and the results are displayed in a table.
 
