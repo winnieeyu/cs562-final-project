@@ -12,6 +12,24 @@ def main():
     for row in cur:
         if row['quant'] > 10:
             _global.append(row)
+    
+    # Define our mf_structure 
+    mf_struct = [{
+        "S": [],    # S = list of project attributes for the query output 
+        "n": 0,     # N = number of grouping variables 
+        "v": "",    # V = list of grouping attributes 
+        "F": [],       # F-VECT (list/vector of agg. functions)
+        "pred_list": [],         # list of predicate variables 
+    } for _ in range(500)]
+
+
+    print("struct {\n ")
+    print("\n" + mf_struct.get("S"))
+    print("\n" + mf_struct.get("n"))
+    print("\n" + mf_struct.get("v"))
+    print("\n" + mf_struct.get("F"))
+    print("\n" + mf_struct.get("pred_list"))
+    print("} mf_struct[500];")
     """
 
     # Note: The f allows formatting with variables.
