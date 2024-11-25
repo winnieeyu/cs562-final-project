@@ -9,26 +9,63 @@ def main():
     """
 
     body = """
-    for row in cur:
-        if row['quant'] > 10:
-            _global.append(row)
-    
-    phi_operands = [{
-        "S": [],    # S = list of project attributes for the query output 
-        "n": 0,     # N = number of grouping variables 
+    import datetime
+    # for row in cur:
+    #     if row['quant'] > 10:
+    #         _global.append(row)
+
+    phi_operands = {
+        "S": "",    # S = list of project attributes for the query output 
+        "n": "",     # N = number of grouping variables 
         "v": "",    # V = list of grouping attributes 
-        "F": [],       # F-VECT (list/vector of agg. functions)
-        "pred_list": [],         # list of predicate variables 
-    } for _ in range(500)]
+        "F": "" ,      # F-VECT (list/vector of agg. functions)
+        "pred_list": ""        # list of predicate variables 
+    } 
 
-    print("struct {\n ")
-    print("\n" + mf_struct.get("S"))
-    print("\n" + mf_struct.get("n"))
-    print("\n" + mf_struct.get("v"))
-    print("\n" + mf_struct.get("F"))
-    print("\n" + mf_struct.get("pred_list"))
-    print("} mf_struct[500];")
+    # define our schema data in a dictionary
+    schema = {
+        "cust": str,
+        "prod": str,
+        "day": int,
+        "month": int, 
+        "year": int, 
+        "state": str,
+        "quant": int, 
+        "date": datetime    
+    }
 
+    # read our file to get the phi operands
+    list = []
+    with open('testing.txt', 'r') as file:
+        for line in file: 
+            list.append(line.strip())
+
+    count = 0
+    for key in phi_operands:
+        phi_operands[key] += list[count]
+        count += 1
+    
+    # create our mf structure
+    whole_select = phi_operands.get("S")
+    S_list = whole_select.split(", ")
+
+    gA = "groupingAttribute"
+    agg = "aggregate"
+    count_gA = 1
+    count_agg = 1
+    
+    for i in S_list:
+        if i in phi_operands.get("v"):
+            str_gA = str(count_gA)
+            temp_str_gA = gA + str_gA
+            print(temp_str_gA + " = " + i)
+            count_gA += 1
+        else: 
+            str_agg = str(count_agg)
+            temp_str_agg = agg + str_agg
+            print(temp_str_agg + " = " + i)
+            count_agg += 1
+   
     """
 
     # Note: The f allows formatting with variables.
@@ -45,12 +82,11 @@ from dotenv import load_dotenv
 def query():
     load_dotenv()
 
-    user = os.getenv('USER')
-    password = os.getenv('PASSWORD')
-    dbname = os.getenv('DBNAME')
+    # user = os.getenv('USER')
+    # password = os.getenv('PASSWORD')
+    # dbname = os.getenv('DBNAME')
 
-    conn = psycopg2.connect("dbname="+dbname+" user="+user+" password="+password,
-                            cursor_factory=psycopg2.extras.DictCursor)
+    conn = psycopg2.connect(dbname="postgres", user="postgres", password="Win.yu25")
     cur = conn.cursor()
     cur.execute("SELECT * FROM sales")
     
