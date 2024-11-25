@@ -26,14 +26,14 @@ def query():
     #         _global.append(row)
 
     phi_operands = {
-        "S": "",    # S = list of project attributes for the query output 
-        "n": "",     # N = number of grouping variables 
-        "v": "",    # V = list of grouping attributes 
-        "F": "" ,      # F-VECT (list/vector of agg. functions)
-        "pred_list": ""        # list of predicate variables 
+        "S": [],    # S = list of project attributes for the query output 
+        "n": 0,     # N = number of grouping variables 
+        "v": [],    # V = list of grouping attributes 
+        "F": [],      # F-VECT (list/vector of agg. functions)
+        "pred_list": []        # list of predicate variables 
     } 
 
-    # define our schema data in a dictionary
+    # define our schema data in a dictionary - don't need this for the algorithm sake. Just check the values as you go for the algorithms
     schema = {
         "cust": str,
         "prod": str,
@@ -45,6 +45,7 @@ def query():
         "date": datetime    
     }
 
+    # ask for input from user and specify data type 
     # read our file to get the phi operands
     list = []
     with open('testing.txt', 'r') as file:
@@ -53,30 +54,59 @@ def query():
 
     count = 0
     for key in phi_operands:
-        phi_operands[key] += list[count]
-        count += 1
-    
-    # create our mf structure
-    whole_select = phi_operands.get("S")
-    S_list = whole_select.split(", ")
+        # current_value = phi_operands[key]
+        if key == "S":
+            s_list = list[count].split(", ")
+            phi_operands[key].extend(s_list)
+            count += 1
+        elif key == "n":
+            phi_operands[key] += int(list[count])
+            count += 1
+        elif key == "v":
+            if list[count].find(",") != -1:
+                v_list = list[count].split(", ")
+                phi_operands[key].extend(v_list)
+            else:
+                phi_operands[key].append(list[count])
+            count += 1 
+        elif key == "F": 
+            f_list = list[count].split(", ")
+            phi_operands[key].extend(f_list)
+            count += 1 
+        elif key == "pred_list":
+            p_list = list[count].split("; ")
+            phi_operands[key].extend(p_list)
+            count += 1 
 
-    gA = "groupingAttribute"
-    agg = "aggregate"
+    print(phi_operands)
+    
+    # create our mf structure to store grouping attributes and aggregate functions 
+    # use list of grouping attributes (v) and list of aggregate functions (F) to get list of all possible cust combinations 
+    
+    gA_list = phi_operands.get("v")
+    agg_list = phi_operands.get("F")
+    # S_list = whole_select.split(", ")
+
+    print(gA_list)
+    print(agg_list)
+
     count_gA = 1
     count_agg = 1
     
-    for i in S_list:
-        if i in phi_operands.get("v"):
-            str_gA = str(count_gA)
-            temp_str_gA = gA + str_gA
-            print(temp_str_gA + " = " + i)
-            count_gA += 1
-        else: 
-            str_agg = str(count_agg)
-            temp_str_agg = agg + str_agg
-            print(temp_str_agg + " = " + i)
-            count_agg += 1
-   
+    for i in gA_list:
+        result = "groupingAttribute{} = {}".format(count_gA, i)
+        print(result)
+        count_gA += 1
+    for i in agg_list: 
+        result = "aggregate{} = {}".format(count_agg, i)
+        print(result)
+        count_agg += 1
+
+        
+    # for row in cur: 
+    #     if row not in _global:
+    #         _global.append(row)
+
     
     
     return tabulate.tabulate(_global,
