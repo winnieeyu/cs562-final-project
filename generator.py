@@ -93,7 +93,11 @@ def main():
         print(result)
         count_agg += 1
 
-        
+    # create a 2d list (for the mf struct) of the grouping attributes and aggregates
+    # for the first scan of the sales table, only add the values for the grouping attributes 
+    # next scan, use the data from the rest of the row that was added to the mf struct to fill in the aggregates  
+    
+
     for row in cur: 
         if row not in _global:
             _global.append(row)
