@@ -21,6 +21,8 @@ def query():
     _global = []
     
     import datetime
+    # import pandas as pd
+    # import numpy as np
     # for row in cur:
     #     if row['quant'] > 10:
     #         _global.append(row)
@@ -102,10 +104,42 @@ def query():
         print(result)
         count_agg += 1
 
-        
+    # create a 2d list (for the mf struct) of the grouping attributes and aggregates
+    # for the first scan of the sales table, only add the values for the grouping attributes 
+    # next scan, use the data from the rest of the row that was added to the mf struct to fill in the aggregates 
+
+    count = 0
+    while count != 10000:
+        for row in cur: 
+            stuff = []
+            for attrib in gA_list:
+                if attrib == "cust":
+                    stuff.append(row[0])
+                elif attrib == "prod":
+                    stuff.append(row[1])
+                elif attrib == "day":
+                    stuff.append(row[2])
+                elif attrib == "month":
+                    stuff.append(row[3])
+                elif attrib == "year":
+                    stuff.append(row[4])
+                elif attrib == "state":
+                    stuff.append(row[5])
+                elif attrib == "quant":
+                    stuff.append(row[6])
+                elif attrib == "date":
+                    stuff.append(row[7])
+            if stuff in _global:
+                continue
+            else:
+                _global.append(stuff)     
+        count += 1
+            
+    
+
     # for row in cur: 
-    #     if row not in _global:
-    #         _global.append(row)
+    #     print(row[1])
+    #     print(row[3])
 
     
     
