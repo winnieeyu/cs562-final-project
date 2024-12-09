@@ -1,5 +1,5 @@
-prod, month, sum(1.sale)/sum(2.sale)
+prod, month, sum(1.quant)/sum(2.quant)
 2
 prod, month
-sum(1.sale), sum(2.sale)
+sum(1.quant), sum(2.quant)
 1.prod=prod and month=month; 2.prod=prod

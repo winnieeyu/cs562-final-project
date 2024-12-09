@@ -49,34 +49,34 @@ def query():
 
     # ask for input from user and specify data type 
     # read our file to get the phi operands
-    list = []
+    op_list = []
     with open('testing.txt', 'r') as file:
         for line in file: 
-            list.append(line.strip())
+            op_list.append(line.strip())
 
     count = 0
     for key in phi_operands:
         # current_value = phi_operands[key]
         if key == "S":
-            s_list = list[count].split(", ")
+            s_list = op_list[count].split(", ")
             phi_operands[key].extend(s_list)
             count += 1
         elif key == "n":
-            phi_operands[key] += int(list[count])
+            phi_operands[key] += int(op_list[count])
             count += 1
         elif key == "v":
-            if list[count].find(",") != -1:
-                v_list = list[count].split(", ")
+            if op_list[count].find(",") != -1:
+                v_list = op_list[count].split(", ")
                 phi_operands[key].extend(v_list)
             else:
-                phi_operands[key].append(list[count])
+                phi_operands[key].append(op_list[count])
             count += 1 
         elif key == "F": 
-            f_list = list[count].split(", ")
+            f_list = op_list[count].split(", ")
             phi_operands[key].extend(f_list)
             count += 1 
         elif key == "pred_list":
-            p_list = list[count].split("; ")
+            p_list = op_list[count].split("; ")
             phi_operands[key].extend(p_list)
             count += 1 
 
@@ -134,12 +134,137 @@ def query():
             else:
                 _global.append(stuff)     
         count += 1
-            
     
+    # print(_global)
+
+    # helper function to split predicate list into each defining condition 
+    p_list = phi_operands.get("pred_list")
+    pred_dict = {}
+    def get_predicates(p_list):
+        for i in p_list:
+            if " and " in i:
+                temp_str = i.split(".")[1]
+                pred_dict[i.split(".")[0]] = temp_str.split(" and ")
+            else:
+                pred_dict[i.split(".")[0]] = [i.split(".")[1]]
+        print(pred_dict)
+        
+                
+    get_predicates(p_list)
+    n = phi_operands.get("n")
+
+   
+    indexes_and_ops = []
+    operations = "!<>="
+    for i in range(1, n+1):
+        defining_cond = pred_dict.get(str(i))
+        that_dc = [] #that specific defining condition
+        for x in defining_cond:
+            if "cust" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(0)
+                that_dc.append(operator)
+            if "prod" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(1)
+                that_dc.append(operator)
+            if "day" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(2)
+                that_dc.append(operator)
+            if "month" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(3)
+                that_dc.append(operator)
+            if "year" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(4)
+                that_dc.append(operator)
+            if "state" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(5)
+                that_dc.append(operator)
+            if "quant" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(6)
+                that_dc.append(operator)
+            if "date" in x:
+                operator = ''.join(filter(lambda b: b in operations, x))
+                that_dc.append(7)
+                that_dc.append(operator)
+        indexes_and_ops.append(that_dc)
+        
+    print(indexes_and_ops)
+    
+    def get_only_indexes(index_list): # grab only the indexes from the indexes list 
+        final_indexes = []
+        for x in index_list:
+            only_indexes = []
+            for inner_element in x:
+                if isinstance(inner_element, int):
+                    only_indexes.append(inner_element)
+            final_indexes.append(only_indexes)
+        return final_indexes 
+
+    sole_indexes = get_only_indexes(indexes_and_ops)
+    print(sole_indexes)
+
+    # helper function to see if we have a duplicate row 
+    def lookup(mf_struct, current_row, indexes):  
+        g = 0 
+        result = False
+        # check if the mf_struct is in our cur_row
+        if all(x in current_row for x in mf_struct):
+            # if so, then check if it's in the correct indexes 
+            for i in indexes:
+                while g < len(mf_struct):
+                    if current_row[i] == mf_struct[g]:
+                        g += 1
+                        result = True
+                    else:
+                        result = False
+                    break
+        return result  
+
+    def get_aggregates(aggregate_list):
+        agg_dict = {}
+        for agg in aggregate_list:
+            agg_dict[agg.split(".")[0].split("(")[1]] = []
+            op = str(agg.split(".")[0].split("(")[0])
+            attr = agg.split(".")[1].split(")")[0]
+            agg_dict[agg.split(".")[0].split("(")[1]].append(op)
+            agg_dict[agg.split(".")[0].split("(")[1]].append(attr)
+        
+            # agg_dict[agg.split(".")[0].split("(")[1]] = []
+            # agg_dict[agg.split(".")[0].split("(")[1]].append(str(attr))
+        return agg_dict
+
+    print(get_aggregates(agg_list))
+             
+
+    # def get_dups(my_indexes):
+    #     for i in _global: # get the current table we have so far 
+    #         cur.execute("SELECT * FROM sales")
+    #         for row in cur: # go thru every row in the database 
+    #             if lookup(i, list(row), my_indexes) == True: 
+                    
+    
+    # for cur_index in sole_indexes: # gets the duplicates for each of our defining conditions
+    #     get_dups(cur_index)
+            
+        
+
+
+                
+    # print(_global)
+
+                
+           
+            
 
     # for row in cur: 
-    #     print(row[1])
-    #     print(row[3])
+    #     new_row = list(row)
+    #     print(new_row)
 
     
     
