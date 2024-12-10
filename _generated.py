@@ -50,7 +50,7 @@ def query():
     # ask for input from user and specify data type 
     # read our file to get the phi operands
     op_list = []
-    with open('testing.txt', 'r') as file:
+    with open('input1.txt', 'r') as file:
         for line in file: 
             op_list.append(line.strip())
 
@@ -209,22 +209,103 @@ def query():
     sole_indexes = get_only_indexes(indexes_and_ops)
     print(sole_indexes)
 
+    def get_only_operations(ops_list): # grab only the operations from the operations list 
+        final_operations = []
+        for x in ops_list:
+            only_ops = []
+            for inner_element in x:
+                if isinstance(inner_element, str):
+                    only_ops.append(inner_element)
+            final_operations.append(only_ops)
+        return final_operations
+
+    sole_operations = get_only_operations(indexes_and_ops)
+    print(sole_operations) 
+
     # helper function to see if we have a duplicate row 
-    def lookup(mf_struct, current_row, indexes):  
-        g = 0 
+    def lookup(mf_struct, current_row, indexes, operations):  
         result = False
         # check if the mf_struct is in our cur_row
-        if all(x in current_row for x in mf_struct):
-            # if so, then check if it's in the correct indexes 
-            for i in indexes:
-                while g < len(mf_struct):
-                    if current_row[i] == mf_struct[g]:
-                        g += 1
-                        result = True
-                    else:
-                        result = False
-                    break
-        return result  
+        if len(mf_struct) == len(indexes):
+            if all(x in current_row for x in mf_struct):
+                for g in range(len(operations)):
+                    small_index = indexes[g]
+                    small_ops = operations[g]
+                    if small_ops == "=":
+                        if current_row[small_index] == mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == "<":
+                        if current_row[small_index] < mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == ">":
+                        if current_row[small_index] > mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == "!=":
+                        if current_row[small_index] != mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+        if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct
+            if any(x in current_row for x in mf_struct):
+                # if so, then check if it's in the correct indexes 
+                for g in range(len(operations)):
+                    small_index = indexes[g]
+                    small_ops = operations[g]
+                    if small_ops == "=":
+                        if current_row[small_index] == mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == "<":
+                        if current_row[small_index] < mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == ">":
+                        if current_row[small_index] > mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == "!=":
+                        if current_row[small_index] != mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+        if len(mf_struct) < len(indexes): # when our indexes list is longer than our mf_struct
+            if all(x in current_row for x in mf_struct):
+                # if so, then check if it's in the correct indexes 
+                for g in range(len(operations)):
+                    small_index = indexes[g]
+                    small_ops = operations[g]
+                    if small_ops == "=":
+                        if current_row[small_index] == mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == "<":
+                        if current_row[small_index] < mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == ">":
+                        if current_row[small_index] > mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+                    if small_ops == "!=":
+                        if current_row[small_index] != mf_struct[g]:
+                            result = True
+                        else:
+                            result = False
+        return result 
+    
+    # print(lookup([1,3], [1,3,4], [1], ["="]))
 
     def get_aggregates(aggregate_list):
         agg_dict = {}
@@ -234,32 +315,72 @@ def query():
             attr = agg.split(".")[1].split(")")[0]
             agg_dict[agg.split(".")[0].split("(")[1]].append(op)
             agg_dict[agg.split(".")[0].split("(")[1]].append(attr)
-        
-            # agg_dict[agg.split(".")[0].split("(")[1]] = []
-            # agg_dict[agg.split(".")[0].split("(")[1]].append(str(attr))
         return agg_dict
 
-    print(get_aggregates(agg_list))
-             
-
-    # def get_dups(my_indexes):
-    #     for i in _global: # get the current table we have so far 
-    #         cur.execute("SELECT * FROM sales")
-    #         for row in cur: # go thru every row in the database 
-    #             if lookup(i, list(row), my_indexes) == True: 
-                    
+    # print(get_aggregates(agg_list))
     
-    # for cur_index in sole_indexes: # gets the duplicates for each of our defining conditions
-    #     get_dups(cur_index)
-            
+    def the_operand(the_aggs, running_result, new_num):
+        if "sum" in the_aggs:
+            running_result = running_result+new_num
+        elif "min" in the_aggs:
+            if new_num < running_result:
+                running_result = new_num
+        elif "max" in the_aggs:
+            if new_num > running_result:
+                running_result = new_num
+        elif "count" in the_aggs:
+            running_result += 1
+        return running_result
         
 
+    agg_dict = get_aggregates(agg_list)
 
-                
-    # print(_global)
+    def get_dups(my_indexes, my_ops):
+        for i in _global: # get the current table we have so far 
+            cur.execute("SELECT * FROM sales")
+            for k in range(1, n+1): # traverses through our agg_dict
+                running_total = 0
+                decider = False
+                aggregates = agg_dict.get(str(k))
+                for row in cur: # go thru every row in the database 
+                    if lookup(i, list(row), my_indexes, my_ops) == True: 
+                        if "cust" in aggregates:
+                            temp_total = the_operand(aggregates[0], running_total, row[0])
+                            running_total = temp_total
+                        if "prod" in aggregates:
+                            temp_total = the_operand(aggregates[0], running_total, row[1])
+                            running_total = temp_total
+                        if "day" in aggregates:
+                            temp_total = the_operand(aggregates[0], running_total, row[2])
+                            running_total = temp_total
+                        if "month" in aggregates: 
+                            temp_total = the_operand(aggregates[0], running_total, row[3])
+                            running_total = temp_total
+                        if "year" in aggregates: 
+                            temp_total = the_operand(aggregates[0], running_total, row[4])
+                            running_total = temp_total
+                        if "state" in aggregates: 
+                            temp_total = the_operand(aggregates[0], running_total, row[5])
+                            running_total = temp_total
+                        if "quant" in aggregates: 
+                            temp_total = the_operand(aggregates[0], running_total, row[6])
+                            running_total = temp_total
+                        if "date" in aggregates:
+                            temp_total = the_operand(aggregates[0], running_total, row[7])
+                            running_total = temp_total 
+                        decider = True
+                       # if "avg" in aggregates:
 
-                
-           
+                if decider == True:
+                    i.append(running_total)
+
+                    
+
+    for i in range(len(sole_indexes)):  # Use the length of the list to get the duplicates for each of our defining conditions
+        cur_index = sole_indexes[i]
+        cur_op = sole_operations[i]
+        test_num = get_dups(cur_index, cur_op)     
+   
             
 
     # for row in cur: 
