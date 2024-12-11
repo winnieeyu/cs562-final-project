@@ -251,7 +251,7 @@ def query():
                             result = True
                         else:
                             result = False
-        if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct
+        if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct 
             if any(x in current_row for x in mf_struct):
                 # if so, then check if it's in the correct indexes 
                 for g in range(len(operations)):
@@ -320,68 +320,187 @@ def query():
     # print(get_aggregates(agg_list))
     
     def the_operand(the_aggs, running_result, new_num):
-        if "sum" in the_aggs:
+        if "sum" == the_aggs:
             running_result = running_result+new_num
-        elif "min" in the_aggs:
+        elif "min" == the_aggs:
             if new_num < running_result:
                 running_result = new_num
-        elif "max" in the_aggs:
+        elif "max" == the_aggs:
             if new_num > running_result:
                 running_result = new_num
-        elif "count" in the_aggs:
+        elif "count" == the_aggs:
             running_result += 1
         return running_result
         
 
     agg_dict = get_aggregates(agg_list)
 
-    def get_dups(my_indexes, my_ops):
+    # testing 
+    # def get_dups(my_indexes, my_ops):
+    #     for i in _global: # get the current table we have so far 
+    #         k = 1
+    #         # for k in range(1, n+1): # traverses through our agg_dict
+    #         while k < (n+1):
+    #             cur.execute("SELECT * FROM sales")
+    #             running_sum = 0 # for avg agg
+    #             running_count = 0 # for avg agg
+    #             running_total = 0
+    #             decider = False
+    #             aggregates = agg_dict.get(str(k))
+    #             for row in cur: # go thru every row in the database 
+    #                 if lookup(i, list(row), my_indexes, my_ops) == True: 
+    #                     if "cust" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[0])
+    #                         running_total = temp_total
+    #                     if "prod" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[1])
+    #                         running_total = temp_total
+    #                     if "day" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[2])
+    #                         running_total = temp_total
+    #                     if "month" in aggregates: 
+    #                         temp_total = the_operand(aggregates[0], running_total, row[3])
+    #                         running_total = temp_total
+    #                     if "year" in aggregates: 
+    #                         temp_total = the_operand(aggregates[0], running_total, row[4])
+    #                         running_total = temp_total
+    #                     if "state" in aggregates: 
+    #                         temp_total = the_operand(aggregates[0], running_total, row[5])
+    #                         running_total = temp_total
+    #                     if "quant" in aggregates: 
+    #                         #print(aggregates)
+    #                         #print(k)
+    #                         if "avg" in aggregates:
+    #                             temp_sum = the_operand("sum", running_sum, row[6])
+    #                             running_sum = temp_sum 
+    #                             temp_count = the_operand("count", running_count, row[6])
+    #                             running_count = temp_count
+    #                         else: 
+    #                             temp_total = the_operand(aggregates[0], running_total, row[6])
+    #                             running_total = temp_total 
+    #                     if "date" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[7])
+    #                         running_total = temp_total 
+    #                     decider = True              
+    #             if "avg" in aggregates:
+    #                 running_total = running_sum/running_count                
+    #             if decider == True:
+    #                 i.append(running_total)
+    #             k += 1
+
+    
+    # another testing 
+    # def get_dups(my_indexes, my_ops):
+    #     for i in _global: # get the current table we have so far 
+    #         cur.execute("SELECT * FROM sales")   
+    #         for row in cur: # go thru every row in the database 
+    #             k = 1
+    #             running_sum = 0 # for avg agg
+    #             running_count = 0 # for avg agg
+    #             running_total = 0
+    #             decider = False
+    #             while k < (n+1):
+    #                 aggregates = agg_dict.get(str(k))
+    #                 if lookup(i, list(row), my_indexes, my_ops) == True: 
+    #                     if "cust" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[0])
+    #                         running_total = temp_total
+    #                     if "prod" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[1])
+    #                         running_total = temp_total
+    #                     if "day" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[2])
+    #                         running_total = temp_total
+    #                     if "month" in aggregates: 
+    #                         temp_total = the_operand(aggregates[0], running_total, row[3])
+    #                         running_total = temp_total
+    #                     if "year" in aggregates: 
+    #                         temp_total = the_operand(aggregates[0], running_total, row[4])
+    #                         running_total = temp_total
+    #                     if "state" in aggregates: 
+    #                         temp_total = the_operand(aggregates[0], running_total, row[5])
+    #                         running_total = temp_total
+    #                     if "quant" in aggregates: 
+    #                         #print(aggregates)
+    #                         #print(k)
+    #                         if "avg" in aggregates:
+    #                             temp_sum = the_operand("sum", running_sum, row[6])
+    #                             running_sum = temp_sum 
+    #                             temp_count = the_operand("count", running_count, row[6])
+    #                             running_count = temp_count
+    #                         else: 
+    #                             temp_total = the_operand(aggregates[0], running_total, row[6])
+    #                             running_total = temp_total 
+    #                     if "date" in aggregates:
+    #                         temp_total = the_operand(aggregates[0], running_total, row[7])
+    #                         running_total = temp_total 
+    #                     decider = True             
+    #                 #if "avg" in aggregates:
+    #                 #    running_total = running_sum/running_count                  
+    #                 if decider == True:
+    #                     i.append(running_total)
+    #                 k += 1
+
+    
+    def get_dups(my_indexes, my_ops, my_key):
         for i in _global: # get the current table we have so far 
+            
             cur.execute("SELECT * FROM sales")
-            for k in range(1, n+1): # traverses through our agg_dict
-                running_total = 0
-                decider = False
-                aggregates = agg_dict.get(str(k))
-                for row in cur: # go thru every row in the database 
-                    if lookup(i, list(row), my_indexes, my_ops) == True: 
-                        if "cust" in aggregates:
-                            temp_total = the_operand(aggregates[0], running_total, row[0])
-                            running_total = temp_total
-                        if "prod" in aggregates:
-                            temp_total = the_operand(aggregates[0], running_total, row[1])
-                            running_total = temp_total
-                        if "day" in aggregates:
-                            temp_total = the_operand(aggregates[0], running_total, row[2])
-                            running_total = temp_total
-                        if "month" in aggregates: 
-                            temp_total = the_operand(aggregates[0], running_total, row[3])
-                            running_total = temp_total
-                        if "year" in aggregates: 
-                            temp_total = the_operand(aggregates[0], running_total, row[4])
-                            running_total = temp_total
-                        if "state" in aggregates: 
-                            temp_total = the_operand(aggregates[0], running_total, row[5])
-                            running_total = temp_total
-                        if "quant" in aggregates: 
+            rows = cur.fetchall()
+
+            running_sum = 0 # for avg agg
+            running_count = 0 # for avg agg
+            running_total = 0
+            decider = False
+            aggregates = agg_dict.get(str(my_key))
+            
+            for row in rows: # go thru every row in the database 
+                if lookup(i, list(row), my_indexes, my_ops): 
+                    if "cust" in aggregates:
+                        temp_total = the_operand(aggregates[0], running_total, row[0])
+                        running_total = temp_total
+                    if "prod" in aggregates:
+                        temp_total = the_operand(aggregates[0], running_total, row[1])
+                        running_total = temp_total
+                    if "day" in aggregates:
+                        temp_total = the_operand(aggregates[0], running_total, row[2])
+                        running_total = temp_total
+                    if "month" in aggregates: 
+                        temp_total = the_operand(aggregates[0], running_total, row[3])
+                        running_total = temp_total
+                    if "year" in aggregates: 
+                        temp_total = the_operand(aggregates[0], running_total, row[4])
+                        running_total = temp_total
+                    if "state" in aggregates: 
+                        temp_total = the_operand(aggregates[0], running_total, row[5])
+                        running_total = temp_total
+                    if "quant" in aggregates:
+                        if "avg" in aggregates:
+                            temp_sum = the_operand("sum", running_sum, row[6])
+                            running_sum = temp_sum 
+
+                            temp_count = the_operand("count", running_count, row[6])
+                            running_count = temp_count
+
+                            running_total = running_sum/running_count
+                        else: 
                             temp_total = the_operand(aggregates[0], running_total, row[6])
-                            running_total = temp_total
-                        if "date" in aggregates:
-                            temp_total = the_operand(aggregates[0], running_total, row[7])
                             running_total = temp_total 
-                        decider = True
-                       # if "avg" in aggregates:
+                    if "date" in aggregates:
+                        temp_total = the_operand(aggregates[0], running_total, row[7])
+                        running_total = temp_total 
+                    decider = True
+            
+            if decider == True:
+                i.append(running_total)
 
-                if decider == True:
-                    i.append(running_total)
-
-                    
-
+                              
     for i in range(len(sole_indexes)):  # Use the length of the list to get the duplicates for each of our defining conditions
         cur_index = sole_indexes[i]
         cur_op = sole_operations[i]
-        test_num = get_dups(cur_index, cur_op)     
-   
-            
+        k = i + 1
+        test_num = get_dups(cur_index, cur_op, k)   
+
 
     # for row in cur: 
     #     new_row = list(row)
