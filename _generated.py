@@ -21,8 +21,6 @@ def query():
     _global = []
     
     import datetime
-    # import pandas as pd
-    # import numpy as np
     # for row in cur:
     #     if row['quant'] > 10:
     #         _global.append(row)
@@ -47,7 +45,6 @@ def query():
         "date": datetime    
     }
 
-    # ask for input from user and specify data type 
     # read our file to get the phi operands
     op_list = []
     with open('input1.txt', 'r') as file:
@@ -155,7 +152,7 @@ def query():
 
    
     indexes_and_ops = []
-    operations = "!<>="
+    operations = "<>="
     for i in range(1, n+1):
         defining_cond = pred_dict.get(str(i))
         that_dc = [] #that specific defining condition
@@ -192,6 +189,15 @@ def query():
                 operator = ''.join(filter(lambda b: b in operations, x))
                 that_dc.append(7)
                 that_dc.append(operator)
+
+            # the defining condition is comparing against itself (e.g. prod=prod, month=month, etc.)
+            operator = ''.join(filter(lambda b: b in operations, x))
+            if x.split(operator)[0] == x.split(operator)[1]:
+                that_dc.append("buff")
+
+            # the defining condition is comparing against an int or str (e.g month=1, state='NY', etc.)
+            if x.split(operator)[0] != x.split(operator)[1]:
+                that_dc.append(x.split(operator)[1])
         indexes_and_ops.append(that_dc)
         
     print(indexes_and_ops)
@@ -214,7 +220,8 @@ def query():
         for x in ops_list:
             only_ops = []
             for inner_element in x:
-                if isinstance(inner_element, str):
+                # operator = ''.join(filter(lambda b: b in operations, x))
+                if inner_element == "=" or inner_element == ">" or inner_element == "<" or inner_element == "<>" or inner_element == ">=" or inner_element == "<=":
                     only_ops.append(inner_element)
             final_operations.append(only_ops)
         return final_operations
@@ -222,87 +229,244 @@ def query():
     sole_operations = get_only_operations(indexes_and_ops)
     print(sole_operations) 
 
+    def get_only_specifics(ops_list): # grab only what we're comparing
+        final_specs= []
+        for x in ops_list:
+            only_specs = []
+            for inner_element in x:
+                if isinstance(inner_element, str):
+                    if inner_element != "=" and inner_element != ">" and inner_element != "<" and inner_element != "<>" and inner_element != ">=" and inner_element != "<=":
+                        if inner_element.isdigit():
+                            only_specs.append(int(inner_element))
+                        else:
+                            only_specs.append(inner_element)
+            final_specs.append(only_specs)
+        return final_specs 
+
+    sole_specs = get_only_specifics(indexes_and_ops)
+    print(sole_specs) 
+
     # helper function to see if we have a duplicate row 
-    def lookup(mf_struct, current_row, indexes, operations):  
+    def lookup(mf_struct, current_row, indexes, operations, specifics):  
         result = False
-        # check if the mf_struct is in our cur_row
-        if len(mf_struct) == len(indexes):
-            if all(x in current_row for x in mf_struct):
+        if len(mf_struct) == len(indexes): 
+            if all(x in current_row for x in mf_struct): # check if the mf_struct is in our current_row
                 for g in range(len(operations)):
-                    small_index = indexes[g]
-                    small_ops = operations[g]
+                    small_index = indexes[g] #5
+                    small_ops = operations[g] #=
+                    small_specs = specifics[g] #NY
                     if small_ops == "=":
-                        if current_row[small_index] == mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] == mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] == small_specs:
+                                result = True
+                            else:
+                                result = False
                     if small_ops == "<":
-                        if current_row[small_index] < mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] < mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] < small_specs:
+                                result = True
+                            else:
+                                result = False
                     if small_ops == ">":
-                        if current_row[small_index] > mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] >mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
-                    if small_ops == "!=":
-                        if current_row[small_index] != mf_struct[g]:
-                            result = True
+                            if current_row[small_index] > small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == "<>":
+                        if small_specs == "buff":
+                            if current_row[small_index] != mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] != small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == ">=":
+                        if small_specs == "buff":
+                            if current_row[small_index] >= mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
+                        else:
+                            if current_row[small_index] >= small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == "<=":
+                        if small_specs == "buff":
+                            if current_row[small_index] <= mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
+                        else:
+                            if current_row[small_index] <= small_specs:
+                                result = True
+                            else:
+                                result = False
         if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct 
             if any(x in current_row for x in mf_struct):
-                # if so, then check if it's in the correct indexes 
-                for g in range(len(operations)):
+                # if so, then check if it's in the correct indexes
+                for g in range(len(operations)): 
                     small_index = indexes[g]
                     small_ops = operations[g]
+                    small_specs = specifics[g]
                     if small_ops == "=":
-                        if current_row[small_index] == mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] == mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] == small_specs:
+                                result = True
+                            else:
+                                result = False
                     if small_ops == "<":
-                        if current_row[small_index] < mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] < mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] < small_specs:
+                                result = True
+                            else:
+                                result = False
                     if small_ops == ">":
-                        if current_row[small_index] > mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] >mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
-                    if small_ops == "!=":
-                        if current_row[small_index] != mf_struct[g]:
-                            result = True
+                            if current_row[small_index] > small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == "<>":
+                        if small_specs == "buff":
+                            if current_row[small_index] != mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] != small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == ">=":
+                        if small_specs == "buff":
+                            if current_row[small_index] >= mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
+                        else:
+                            if current_row[small_index] >= small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == "<=":
+                        if small_specs == "buff":
+                            if current_row[small_index] <= mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
+                        else:
+                            if current_row[small_index] <= small_specs:
+                                result = True
+                            else:
+                                result = False
         if len(mf_struct) < len(indexes): # when our indexes list is longer than our mf_struct
             if all(x in current_row for x in mf_struct):
                 # if so, then check if it's in the correct indexes 
                 for g in range(len(operations)):
                     small_index = indexes[g]
                     small_ops = operations[g]
+                    small_specs = specifics[g]
                     if small_ops == "=":
-                        if current_row[small_index] == mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] == mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] == small_specs:
+                                result = True
+                            else:
+                                result = False
                     if small_ops == "<":
-                        if current_row[small_index] < mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] < mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] < small_specs:
+                                result = True
+                            else:
+                                result = False
                     if small_ops == ">":
-                        if current_row[small_index] > mf_struct[g]:
-                            result = True
+                        if small_specs == "buff":
+                            if current_row[small_index] >mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
-                    if small_ops == "!=":
-                        if current_row[small_index] != mf_struct[g]:
-                            result = True
+                            if current_row[small_index] > small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == "<>":
+                        if small_specs == "buff":
+                            if current_row[small_index] != mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
                         else:
-                            result = False
+                            if current_row[small_index] != small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == ">=":
+                        if small_specs == "buff":
+                            if current_row[small_index] >= mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
+                        else:
+                            if current_row[small_index] >= small_specs:
+                                result = True
+                            else:
+                                result = False
+                    if small_ops == "<=":
+                        if small_specs == "buff":
+                            if current_row[small_index] <= mf_struct[g]: 
+                                result = True
+                            else:
+                                result = False
+                        else:
+                            if current_row[small_index] <= small_specs:
+                                result = True
+                            else:
+                                result = False
         return result 
     
     # print(lookup([1,3], [1,3,4], [1], ["="]))
@@ -334,128 +498,23 @@ def query():
         
 
     agg_dict = get_aggregates(agg_list)
+    print(agg_dict)
 
-    # testing 
-    # def get_dups(my_indexes, my_ops):
-    #     for i in _global: # get the current table we have so far 
-    #         k = 1
-    #         # for k in range(1, n+1): # traverses through our agg_dict
-    #         while k < (n+1):
-    #             cur.execute("SELECT * FROM sales")
-    #             running_sum = 0 # for avg agg
-    #             running_count = 0 # for avg agg
-    #             running_total = 0
-    #             decider = False
-    #             aggregates = agg_dict.get(str(k))
-    #             for row in cur: # go thru every row in the database 
-    #                 if lookup(i, list(row), my_indexes, my_ops) == True: 
-    #                     if "cust" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[0])
-    #                         running_total = temp_total
-    #                     if "prod" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[1])
-    #                         running_total = temp_total
-    #                     if "day" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[2])
-    #                         running_total = temp_total
-    #                     if "month" in aggregates: 
-    #                         temp_total = the_operand(aggregates[0], running_total, row[3])
-    #                         running_total = temp_total
-    #                     if "year" in aggregates: 
-    #                         temp_total = the_operand(aggregates[0], running_total, row[4])
-    #                         running_total = temp_total
-    #                     if "state" in aggregates: 
-    #                         temp_total = the_operand(aggregates[0], running_total, row[5])
-    #                         running_total = temp_total
-    #                     if "quant" in aggregates: 
-    #                         #print(aggregates)
-    #                         #print(k)
-    #                         if "avg" in aggregates:
-    #                             temp_sum = the_operand("sum", running_sum, row[6])
-    #                             running_sum = temp_sum 
-    #                             temp_count = the_operand("count", running_count, row[6])
-    #                             running_count = temp_count
-    #                         else: 
-    #                             temp_total = the_operand(aggregates[0], running_total, row[6])
-    #                             running_total = temp_total 
-    #                     if "date" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[7])
-    #                         running_total = temp_total 
-    #                     decider = True              
-    #             if "avg" in aggregates:
-    #                 running_total = running_sum/running_count                
-    #             if decider == True:
-    #                 i.append(running_total)
-    #             k += 1
 
-    
-    # another testing 
-    # def get_dups(my_indexes, my_ops):
-    #     for i in _global: # get the current table we have so far 
-    #         cur.execute("SELECT * FROM sales")   
-    #         for row in cur: # go thru every row in the database 
-    #             k = 1
-    #             running_sum = 0 # for avg agg
-    #             running_count = 0 # for avg agg
-    #             running_total = 0
-    #             decider = False
-    #             while k < (n+1):
-    #                 aggregates = agg_dict.get(str(k))
-    #                 if lookup(i, list(row), my_indexes, my_ops) == True: 
-    #                     if "cust" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[0])
-    #                         running_total = temp_total
-    #                     if "prod" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[1])
-    #                         running_total = temp_total
-    #                     if "day" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[2])
-    #                         running_total = temp_total
-    #                     if "month" in aggregates: 
-    #                         temp_total = the_operand(aggregates[0], running_total, row[3])
-    #                         running_total = temp_total
-    #                     if "year" in aggregates: 
-    #                         temp_total = the_operand(aggregates[0], running_total, row[4])
-    #                         running_total = temp_total
-    #                     if "state" in aggregates: 
-    #                         temp_total = the_operand(aggregates[0], running_total, row[5])
-    #                         running_total = temp_total
-    #                     if "quant" in aggregates: 
-    #                         #print(aggregates)
-    #                         #print(k)
-    #                         if "avg" in aggregates:
-    #                             temp_sum = the_operand("sum", running_sum, row[6])
-    #                             running_sum = temp_sum 
-    #                             temp_count = the_operand("count", running_count, row[6])
-    #                             running_count = temp_count
-    #                         else: 
-    #                             temp_total = the_operand(aggregates[0], running_total, row[6])
-    #                             running_total = temp_total 
-    #                     if "date" in aggregates:
-    #                         temp_total = the_operand(aggregates[0], running_total, row[7])
-    #                         running_total = temp_total 
-    #                     decider = True             
-    #                 #if "avg" in aggregates:
-    #                 #    running_total = running_sum/running_count                  
-    #                 if decider == True:
-    #                     i.append(running_total)
-    #                 k += 1
-
-    
-    def get_dups(my_indexes, my_ops, my_key):
+    def get_dups(my_indexes, my_ops, my_specs, my_key):
         for i in _global: # get the current table we have so far 
             
             cur.execute("SELECT * FROM sales")
             rows = cur.fetchall()
 
-            running_sum = 0 # for avg agg
-            running_count = 0 # for avg agg
+            running_sum = 0 # for average aggregate
+            running_count = 0 # for average aggregate
             running_total = 0
             decider = False
             aggregates = agg_dict.get(str(my_key))
             
-            for row in rows: # go thru every row in the database 
-                if lookup(i, list(row), my_indexes, my_ops): 
+            for row in rows: # go through every row in the database 
+                if lookup(i, list(row), my_indexes, my_ops, my_specs): 
                     if "cust" in aggregates:
                         temp_total = the_operand(aggregates[0], running_total, row[0])
                         running_total = temp_total
@@ -498,8 +557,9 @@ def query():
     for i in range(len(sole_indexes)):  # Use the length of the list to get the duplicates for each of our defining conditions
         cur_index = sole_indexes[i]
         cur_op = sole_operations[i]
+        cur_spec = sole_specs[i]
         k = i + 1
-        test_num = get_dups(cur_index, cur_op, k)   
+        test_num = get_dups(cur_index, cur_op, cur_spec, k)   
 
 
     # for row in cur: 

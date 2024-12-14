@@ -1,0 +1,5 @@
+cust, sum(1.quant), sum(2.quant), sum(3.quant)
+3
+cust
+sum(1.quant), sum(2.quant), sum(3.quant)
+1.state=NY; 2.state=NJ; 3.state=CT
