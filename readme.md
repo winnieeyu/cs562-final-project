@@ -4,8 +4,7 @@ By Team Mochi (Lauren Espineli and Winnie Yu)
 ## Instructions 
 1. Download the files from Github 
 2. Go to ```generator.py``` and on ```line 1210``` enter your PostgreSQL username and password
-3. Next, on ```line 36``` input your desired .txt file. 
-&emsp;(Reference "How to Properly Format Your Input" if you're having trouble)
+3. Next, on ```line 36``` input your desired .txt file. (Reference "How to Properly Format Your Input" if you're having trouble)
 4. Finally, run your code! 
 
 
