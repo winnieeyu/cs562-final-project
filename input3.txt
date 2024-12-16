@@ -1,5 +1,5 @@
-cust, sum(1.quant), sum(2.quant), sum(3.quant)
-3
+cust, avg(1.quant), avg(2.quant)
+2
 cust
-sum(1.quant), sum(2.quant), sum(3.quant)
-1.state=NY; 2.state=NJ; 3.state=CT
+avg(1.quant), avg(2.quant)
+1.month<6; 2.state=NJ

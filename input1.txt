@@ -1,4 +1,4 @@
-prod, month, sum(1.quant)/sum(2.quant)
+prod, month, sum(1.quant), avg(2.quant)
 2
 prod, month
 sum(1.quant), avg(2.quant)

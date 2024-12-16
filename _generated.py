@@ -21,10 +21,7 @@ def query():
     _global = []
     
     import datetime
-    # for row in cur:
-    #     if row['quant'] > 10:
-    #         _global.append(row)
-
+    
     phi_operands = {
         "S": [],    # S = list of project attributes for the query output 
         "n": 0,     # N = number of grouping variables 
@@ -33,7 +30,7 @@ def query():
         "pred_list": []        # list of predicate variables 
     } 
 
-    # define our schema data in a dictionary - don't need this for the algorithm sake. Just check the values as you go for the algorithms
+    # define our schema data in a dictionary
     schema = {
         "cust": str,
         "prod": str,
@@ -47,13 +44,12 @@ def query():
 
     # read our file to get the phi operands
     op_list = []
-    with open('input1.txt', 'r') as file:
+    with open('input3.txt', 'r') as file:
         for line in file: 
             op_list.append(line.strip())
 
     count = 0
-    for key in phi_operands:
-        # current_value = phi_operands[key]
+    for key in phi_operands: # goes thru the file and puts the inputs into the phi_operands dictioanry
         if key == "S":
             s_list = op_list[count].split(", ")
             phi_operands[key].extend(s_list)
@@ -79,20 +75,16 @@ def query():
 
     print(phi_operands)
     
-    # create our mf structure to store grouping attributes and aggregate functions 
-    # use list of grouping attributes (v) and list of aggregate functions (F) to get list of all possible cust combinations 
-    
+    # create lists for our grouping attributes and aggregates 
     gA_list = phi_operands.get("v")
     agg_list = phi_operands.get("F")
-    # S_list = whole_select.split(", ")
 
     print(gA_list)
     print(agg_list)
 
     count_gA = 1
     count_agg = 1
-    
-    for i in gA_list:
+    for i in gA_list: # sees what how many and what our grouping attributes are 
         result = "groupingAttribute{} = {}".format(count_gA, i)
         print(result)
         count_gA += 1
@@ -101,12 +93,8 @@ def query():
         print(result)
         count_agg += 1
 
-    # create a 2d list (for the mf struct) of the grouping attributes and aggregates
-    # for the first scan of the sales table, only add the values for the grouping attributes 
-    # next scan, use the data from the rest of the row that was added to the mf struct to fill in the aggregates 
-
     count = 0
-    while count != 10000:
+    while count != 10000: # creates an initial table - mf struct
         for row in cur: 
             stuff = []
             for attrib in gA_list:
@@ -131,8 +119,6 @@ def query():
             else:
                 _global.append(stuff)     
         count += 1
-    
-    # print(_global)
 
     # helper function to split predicate list into each defining condition 
     p_list = phi_operands.get("pred_list")
@@ -146,19 +132,20 @@ def query():
                 pred_dict[i.split(".")[0]] = [i.split(".")[1]]
         print(pred_dict)
         
-                
+            
     get_predicates(p_list)
-    n = phi_operands.get("n")
+    n = phi_operands.get("n") # assigns the number of grouping variables to n 
 
-   
+    
+    # gets the defining conditions and breaks it down into the index of the column we're comparing, the operation, and what we're comparing it to (inputting in a dictionary, outputting a 2D list)
     indexes_and_ops = []
-    operations = "<>="
+    operations = "<>=" # used to get the operator
     for i in range(1, n+1):
         defining_cond = pred_dict.get(str(i))
-        that_dc = [] #that specific defining condition
+        that_dc = [] # that specific defining condition we'll need to append at the end to our indexes_and_ops list 
         for x in defining_cond:
             if "cust" in x:
-                operator = ''.join(filter(lambda b: b in operations, x))
+                operator = ''.join(filter(lambda b: b in operations, x)) # this filter only takes the operator (i.e referencing the operations string)
                 that_dc.append(0)
                 that_dc.append(operator)
             if "prod" in x:
@@ -193,7 +180,7 @@ def query():
             # the defining condition is comparing against itself (e.g. prod=prod, month=month, etc.)
             operator = ''.join(filter(lambda b: b in operations, x))
             if x.split(operator)[0] == x.split(operator)[1]:
-                that_dc.append("buff")
+                that_dc.append("buff") # append "buff" so later on, when we get our grouping predicates, we know what our table wants to compare with
 
             # the defining condition is comparing against an int or str (e.g month=1, state='NY', etc.)
             if x.split(operator)[0] != x.split(operator)[1]:
@@ -202,7 +189,7 @@ def query():
         
     print(indexes_and_ops)
     
-    def get_only_indexes(index_list): # grab only the indexes from the indexes list 
+    def get_only_indexes(index_list): # grab only the indexes from the indexes_and_ops list 
         final_indexes = []
         for x in index_list:
             only_indexes = []
@@ -215,12 +202,11 @@ def query():
     sole_indexes = get_only_indexes(indexes_and_ops)
     print(sole_indexes)
 
-    def get_only_operations(ops_list): # grab only the operations from the operations list 
+    def get_only_operations(ops_list): # grab only the operations from the indexes_and_ops list 
         final_operations = []
         for x in ops_list:
             only_ops = []
             for inner_element in x:
-                # operator = ''.join(filter(lambda b: b in operations, x))
                 if inner_element == "=" or inner_element == ">" or inner_element == "<" or inner_element == "<>" or inner_element == ">=" or inner_element == "<=":
                     only_ops.append(inner_element)
             final_operations.append(only_ops)
@@ -229,14 +215,14 @@ def query():
     sole_operations = get_only_operations(indexes_and_ops)
     print(sole_operations) 
 
-    def get_only_specifics(ops_list): # grab only what we're comparing
+    def get_only_specifics(ops_list): # grab only what we're comparing to the indexes
         final_specs= []
         for x in ops_list:
             only_specs = []
             for inner_element in x:
                 if isinstance(inner_element, str):
                     if inner_element != "=" and inner_element != ">" and inner_element != "<" and inner_element != "<>" and inner_element != ">=" and inner_element != "<=":
-                        if inner_element.isdigit():
+                        if inner_element.isdigit(): # if the element is a digit but in string format, cast it into an int before appending
                             only_specs.append(int(inner_element))
                         else:
                             only_specs.append(inner_element)
@@ -251,21 +237,57 @@ def query():
         result = False
         if len(mf_struct) == len(indexes): 
             if all(x in current_row for x in mf_struct): # check if the mf_struct is in our current_row
-                for g in range(len(operations)):
-                    small_index = indexes[g] #5
-                    small_ops = operations[g] #=
-                    small_specs = specifics[g] #NY
+                for g in range(len(operations)): # i.e g=1
+                    small_index = indexes[g] # i.e 3
+                    small_ops = operations[g] # i.e <
+                    small_specs = specifics[g] # i.e NY or buff
                     if small_ops == "=":
-                        if small_specs == "buff":
-                            if current_row[small_index] == mf_struct[g]: 
+                        if small_specs == "buff": # this means there's no specifics when comparing just this: i.e. prod=prod, month=month
+                            if current_row[small_index] == mf_struct[g]: # this is a duplicate!
                                 result = True
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] == small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<":
                         if small_specs == "buff":
                             if current_row[small_index] < mf_struct[g]: 
@@ -273,10 +295,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] < small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == ">":
                         if small_specs == "buff":
                             if current_row[small_index] >mf_struct[g]: 
@@ -284,10 +342,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] > small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<>":
                         if small_specs == "buff":
                             if current_row[small_index] != mf_struct[g]: 
@@ -295,10 +389,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] != small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == ">=":
                         if small_specs == "buff":
                             if current_row[small_index] >= mf_struct[g]: 
@@ -306,10 +436,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] >= small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<=":
                         if small_specs == "buff":
                             if current_row[small_index] <= mf_struct[g]: 
@@ -317,28 +483,100 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] <= small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
         if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct 
-            if any(x in current_row for x in mf_struct):
+            if any(x in current_row for x in mf_struct): # at least one the elements in our mf struct is in our current row
                 # if so, then check if it's in the correct indexes
                 for g in range(len(operations)): 
-                    small_index = indexes[g]
-                    small_ops = operations[g]
-                    small_specs = specifics[g]
+                    small_index = indexes[g] # i.e 3
+                    small_ops = operations[g] # i.e <
+                    small_specs = specifics[g] # i.e NY or buff
                     if small_ops == "=":
-                        if small_specs == "buff":
-                            if current_row[small_index] == mf_struct[g]: 
+                        if small_specs == "buff": # this means there's no specifics when comparing just this: i.e. prod=prod, month=month
+                            if current_row[small_index] == mf_struct[g]: # this is a duplicate!
                                 result = True
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] == small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<":
                         if small_specs == "buff":
                             if current_row[small_index] < mf_struct[g]: 
@@ -346,10 +584,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] < small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == ">":
                         if small_specs == "buff":
                             if current_row[small_index] >mf_struct[g]: 
@@ -357,10 +631,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] > small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<>":
                         if small_specs == "buff":
                             if current_row[small_index] != mf_struct[g]: 
@@ -368,10 +678,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] != small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == ">=":
                         if small_specs == "buff":
                             if current_row[small_index] >= mf_struct[g]: 
@@ -379,10 +725,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] >= small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<=":
                         if small_specs == "buff":
                             if current_row[small_index] <= mf_struct[g]: 
@@ -390,28 +772,100 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] <= small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
         if len(mf_struct) < len(indexes): # when our indexes list is longer than our mf_struct
             if all(x in current_row for x in mf_struct):
                 # if so, then check if it's in the correct indexes 
                 for g in range(len(operations)):
-                    small_index = indexes[g]
-                    small_ops = operations[g]
-                    small_specs = specifics[g]
+                    small_index = indexes[g] # i.e 3
+                    small_ops = operations[g] # i.e <
+                    small_specs = specifics[g] # i.e NY or buff
                     if small_ops == "=":
-                        if small_specs == "buff":
-                            if current_row[small_index] == mf_struct[g]: 
+                        if small_specs == "buff": # this means there's no specifics when comparing just this: i.e. prod=prod, month=month
+                            if current_row[small_index] == mf_struct[g]: # this is a duplicate!
                                 result = True
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] == small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] == small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<":
                         if small_specs == "buff":
                             if current_row[small_index] < mf_struct[g]: 
@@ -419,10 +873,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] < small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] < small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == ">":
                         if small_specs == "buff":
                             if current_row[small_index] >mf_struct[g]: 
@@ -430,10 +920,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] > small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] > small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<>":
                         if small_specs == "buff":
                             if current_row[small_index] != mf_struct[g]: 
@@ -441,10 +967,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] != small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] != small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == ">=":
                         if small_specs == "buff":
                             if current_row[small_index] >= mf_struct[g]: 
@@ -452,10 +1014,46 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] >= small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] >= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
                     if small_ops == "<=":
                         if small_specs == "buff":
                             if current_row[small_index] <= mf_struct[g]: 
@@ -463,15 +1061,49 @@ def query():
                             else:
                                 result = False
                         else:
-                            if current_row[small_index] <= small_specs:
-                                result = True
-                            else:
-                                result = False
+                            if "cust" in gA_list:
+                                if current_row[g] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "prod" in gA_list:
+                                if current_row[g+1] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "day" in gA_list:
+                                if current_row[g+2] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "month" in gA_list:
+                                if current_row[g+3] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "year" in gA_list:
+                                if current_row[g+4] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "state" in gA_list:
+                                if current_row[g+5] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "quant" in gA_list:
+                                if current_row[g+6] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
+                            if "date" in gA_list:
+                                if current_row[g+7] == mf_struct[g] and current_row[small_index] <= small_specs: # there's a specific one we have to compare i.e. month=1
+                                    result = True
+                                else:
+                                    result = False
         return result 
     
-    # print(lookup([1,3], [1,3,4], [1], ["="]))
-
-    def get_aggregates(aggregate_list):
+    def get_aggregates(aggregate_list): # grab the aggregates, put in a dictionary, then use the dictionary so we can access the aggregates easier (i.e. for our get_dups function)
         agg_dict = {}
         for agg in aggregate_list:
             agg_dict[agg.split(".")[0].split("(")[1]] = []
@@ -481,12 +1113,12 @@ def query():
             agg_dict[agg.split(".")[0].split("(")[1]].append(attr)
         return agg_dict
 
-    # print(get_aggregates(agg_list))
-    
-    def the_operand(the_aggs, running_result, new_num):
+    def the_operand(the_aggs, running_result, new_num): # do the aggerate's operand to keep track (i.e. the new min, max, sum)
         if "sum" == the_aggs:
             running_result = running_result+new_num
         elif "min" == the_aggs:
+            if running_result == 0:
+                running_result = new_num
             if new_num < running_result:
                 running_result = new_num
         elif "max" == the_aggs:
@@ -501,7 +1133,7 @@ def query():
     print(agg_dict)
 
 
-    def get_dups(my_indexes, my_ops, my_specs, my_key):
+    def get_dups(my_indexes, my_ops, my_specs, my_key): # find the rows that match the grouping attributes
         for i in _global: # get the current table we have so far 
             
             cur.execute("SELECT * FROM sales")
@@ -542,15 +1174,20 @@ def query():
                             running_count = temp_count
 
                             running_total = running_sum/running_count
+                        elif "count" in aggregates:
+                            temp_count = the_operand("count", running_count, row[6])
+                            running_count = temp_count
+                            running_total = running_count
                         else: 
                             temp_total = the_operand(aggregates[0], running_total, row[6])
                             running_total = temp_total 
                     if "date" in aggregates:
                         temp_total = the_operand(aggregates[0], running_total, row[7])
                         running_total = temp_total 
+                    
                     decider = True
             
-            if decider == True:
+            if decider == True: # if the row is a duplicate, append the result of the aggregate into our new table (mf_struct)
                 i.append(running_total)
 
                               
@@ -560,11 +1197,6 @@ def query():
         cur_spec = sole_specs[i]
         k = i + 1
         test_num = get_dups(cur_index, cur_op, cur_spec, k)   
-
-
-    # for row in cur: 
-    #     new_row = list(row)
-    #     print(new_row)
 
     
     

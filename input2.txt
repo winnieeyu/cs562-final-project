@@ -1,5 +1,5 @@
-prod, sum(1.quant), sum(2.quant), sum(3.quant)
+prod, min(1.quant), max(2.quant), count(3.quant)
 3
 prod
-sum(1.quant), sum(2.quant), sum(3.quant)
+min(1.quant), max(2.quant), count(3.quant)
 1.month=1; 2.month=2; 3.month=3
