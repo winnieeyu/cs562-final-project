@@ -5,7 +5,8 @@ By Team Mochi (Lauren Espineli and Winnie Yu)
 1. Download the files from Github 
 2. Go to ```generator.py``` and on ```line 1210``` enter your PostgreSQL username and password
 3. Next, on ```line 36``` input your desired .txt file. (Reference "How to Properly Format Your Input" if you're having trouble)
-4. Finally, run your code! 
+4. Before running your code, be sure to ```pip install tabulate```, ```pip install datetime```, and ```pip install psycopg2-binary```
+5. Finally, run your code! 
 
 
 ### How to Properly Format Your Input 
