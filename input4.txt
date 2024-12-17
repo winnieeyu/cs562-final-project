@@ -1,0 +1,5 @@
+month, year, avg(1.quant), avg(2.quant)
+2
+month, year
+avg(1.quant), avg(2.quant)
+1.month=month and year=year; 2.year=year

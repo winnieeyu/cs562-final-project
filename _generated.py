@@ -44,7 +44,7 @@ def query():
 
     # read our file to get the phi operands
     op_list = []
-    with open('input3.txt', 'r') as file:
+    with open('input1.txt', 'r') as file:
         for line in file: 
             op_list.append(line.strip())
 
@@ -233,7 +233,7 @@ def query():
     print(sole_specs) 
 
     # helper function to see if we have a duplicate row 
-    def lookup(mf_struct, current_row, indexes, operations, specifics):  
+    def lookup(mf_struct, current_row, indexes, operations, specifics, attributes):  
         result = False
         if len(mf_struct) == len(indexes): 
             if all(x in current_row for x in mf_struct): # check if the mf_struct is in our current_row
@@ -525,15 +525,16 @@ def query():
                                     result = False
         if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct 
             if any(x in current_row for x in mf_struct): # at least one the elements in our mf struct is in our current row
+            # if current_row[4] in mf_struct[1]:
                 # if so, then check if it's in the correct indexes
-                for g in range(len(operations)): 
+                for g in range(len(operations)): # g=0
                     small_index = indexes[g] # i.e 3
                     small_ops = operations[g] # i.e <
                     small_specs = specifics[g] # i.e NY or buff
                     if small_ops == "=":
                         if small_specs == "buff": # this means there's no specifics when comparing just this: i.e. prod=prod, month=month
                             if current_row[small_index] == mf_struct[g]: # this is a duplicate!
-                                result = True
+                               result = True
                             else:
                                 result = False
                         else:
@@ -1133,7 +1134,7 @@ def query():
     print(agg_dict)
 
 
-    def get_dups(my_indexes, my_ops, my_specs, my_key): # find the rows that match the grouping attributes
+    def get_dups(my_indexes, my_ops, my_specs, my_ga, my_key): # find the rows that match the grouping attributes
         for i in _global: # get the current table we have so far 
             
             cur.execute("SELECT * FROM sales")
@@ -1146,7 +1147,7 @@ def query():
             aggregates = agg_dict.get(str(my_key))
             
             for row in rows: # go through every row in the database 
-                if lookup(i, list(row), my_indexes, my_ops, my_specs): 
+                if lookup(i, list(row), my_indexes, my_ops, my_specs, my_ga): 
                     if "cust" in aggregates:
                         temp_total = the_operand(aggregates[0], running_total, row[0])
                         running_total = temp_total
@@ -1195,8 +1196,10 @@ def query():
         cur_index = sole_indexes[i]
         cur_op = sole_operations[i]
         cur_spec = sole_specs[i]
+        cur_ga = gA_list[i]
+
         k = i + 1
-        test_num = get_dups(cur_index, cur_op, cur_spec, k)   
+        test_num = get_dups(cur_index, cur_op, cur_spec, cur_ga, k)   
 
     
     

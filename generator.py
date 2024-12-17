@@ -33,7 +33,7 @@ def main():
 
     # read our file to get the phi operands
     op_list = []
-    with open('input3.txt', 'r') as file:
+    with open('input1.txt', 'r') as file:
         for line in file: 
             op_list.append(line.strip())
 
@@ -514,15 +514,16 @@ def main():
                                     result = False
         if len(mf_struct) > len(indexes): # when our indexes list is shorter than our mf_struct 
             if any(x in current_row for x in mf_struct): # at least one the elements in our mf struct is in our current row
+            # if current_row[4] in mf_struct[1]:
                 # if so, then check if it's in the correct indexes
-                for g in range(len(operations)): 
+                for g in range(len(operations)): # g=0
                     small_index = indexes[g] # i.e 3
                     small_ops = operations[g] # i.e <
                     small_specs = specifics[g] # i.e NY or buff
                     if small_ops == "=":
                         if small_specs == "buff": # this means there's no specifics when comparing just this: i.e. prod=prod, month=month
                             if current_row[small_index] == mf_struct[g]: # this is a duplicate!
-                                result = True
+                               result = True
                             else:
                                 result = False
                         else:
@@ -1184,6 +1185,8 @@ def main():
         cur_index = sole_indexes[i]
         cur_op = sole_operations[i]
         cur_spec = sole_specs[i]
+        # cur_ga = gA_list[i]
+
         k = i + 1
         test_num = get_dups(cur_index, cur_op, cur_spec, k)   
 
